@@ -1,16 +1,18 @@
 import React from 'react';
 import Avatar from 'react-avatar';
+import './Client.css';
 
 /**
-  * Renders a client component with the given username.
-  * @param {string} username - The username of the client.
-  * @returns {JSX.Element} - The client component.
-  */
-export default function Client({username}) {
-  return (
-    <div className='client'>
-        <Avatar name={username} size={50} round="40px"/>
-        <span className='username'>{username}</span>        
-    </div>
-  )
+ * Renders a connected user avatar with username and online indicator.
+ */
+export default function Client({ username }) {
+    return (
+        <div className="client">
+            <div className="client-avatar-wrap">
+                <Avatar name={username} size={36} round="8px" />
+                <span className="client-online-dot" />
+            </div>
+            <span className="client-username">{username}</span>
+        </div>
+    );
 }

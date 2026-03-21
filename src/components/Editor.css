@@ -1,0 +1,155 @@
+/* ── Editor container ── */
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #1a1d23;
+    overflow: hidden;
+}
+
+/* ── Toolbar ── */
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 42px;
+    background: #13151a;
+    border-bottom: 1px solid #2a2d35;
+    flex-shrink: 0;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #7c6af7;
+    display: inline-block;
+}
+
+.file-name {
+    font-size: 13px;
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.typing-indicator {
+    font-size: 11px;
+    color: #7c6af7;
+    font-style: italic;
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lang-select {
+    background: #1e2128;
+    color: #c9d1d9;
+    border: 1px solid #2a2d35;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.lang-select:hover,
+.lang-select:focus {
+    border-color: #7c6af7;
+}
+
+.toolbar-btn {
+    background: #1e2128;
+    color: #c9d1d9;
+    border: 1px solid #2a2d35;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+    background: #7c6af7;
+    border-color: #7c6af7;
+    color: #fff;
+}
+
+/* ── Editor body ── */
+.editor-body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.editor-body .CodeMirror {
+    height: 100%;
+    font-size: 14px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    line-height: 1.7;
+    background: #1a1d23;
+    padding-top: 12px;
+}
+
+.editor-body .CodeMirror-scroll {
+    height: 100%;
+}
+
+/* ── Status bar ── */
+.editor-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 16px;
+    height: 26px;
+    background: #13151a;
+    border-top: 1px solid #2a2d35;
+    font-size: 11px;
+    color: #6e7681;
+    flex-shrink: 0;
+}
+
+.status-synced {
+    color: #7c6af7;
+    margin-left: auto;
+}
+
+/* ── Remote cursors ── */
+.remote-cursor {
+    position: relative;
+    border-left: 2px solid;
+    margin-left: -1px;
+    display: inline-block;
+    height: 1.2em;
+    vertical-align: text-bottom;
+}
+
+.remote-cursor-label {
+    position: absolute;
+    top: -18px;
+    left: 0;
+    font-size: 10px;
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    pointer-events: none;
+    font-family: sans-serif;
+}

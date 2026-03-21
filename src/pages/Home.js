@@ -1,100 +1,157 @@
 import React, { useState } from 'react';
-import logo from './logo.png';
-import './style/style.css';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import './Home.css';
 
-/**
- * Home component
- * Renders the home page with a form to join or create a room
- */
 function Home() {
-  const navigate = useNavigate();
-  const [roomId, setRoomId] = useState('');
-  const [username, setUsername] = useState('');
+    const navigate = useNavigate();
+    const [roomId, setRoomId] = useState('');
+    const [username, setUsername] = useState('');
 
-  /**
-   * Creates a new room
-   * @param {Event} e - The event object
-   */
-  const createNewRoom = (e) => {
-    e.preventDefault();
-    const id = uuidv4();
-    setRoomId(id);
-    toast.success('Created New Room');
-  };
+    const createNewRoom = (e) => {
+        e.preventDefault();
+        const id = uuidv4();
+        setRoomId(id);
+        toast.success('New room created — copy the ID and share it!');
+    };
 
-  /**
-   * Handles the Enter key press event on the input fields
-   * Calls the joinRoom function if the Enter key is pressed
-   * @param {Event} e - The event object
-   */
-  const handleInputEnter = (e) => {
-    if(e.code === 'Enter'){
-      joinRoom();
-    }
-  }
+    const copyRoomId = async (e) => {
+        e.preventDefault();
+        if (!roomId) return;
+        try {
+            await navigator.clipboard.writeText(roomId);
+            toast.success('Room ID copied to clipboard!');
+        } catch {
+            toast.error('Could not copy — please copy manually.');
+        }
+    };
 
-  /**
-   * Joins a room
-   * Redirects to the editor page with the roomId and username as state
-   */
-  const joinRoom = () => {
-    if (!roomId || !username) {
-      toast.error('Room Id & username is required');
-      return;
-    }
+    const handleInputEnter = (e) => {
+        if (e.code === 'Enter') joinRoom();
+    };
 
-    // Redirect
-    navigate(`/editor/${roomId}`, {
-      state: {
-        username,
-      },
-    });
-  };
+    const joinRoom = () => {
+        if (!roomId || !username) {
+            toast.error('Room ID and username are required');
+            return;
+        }
+        navigate(`/editor/${roomId}`, { state: { username } });
+    };
 
-  return (
-    <div className="homePageWrapper">
-      <div className="formWrapper">
-        <img className="logo" src={logo} alt="na" />
-        <h4 className="mainLabel">Paste Invation Room ID</h4>
-        <div className="inputGroup">
-          <input
-            type="text"
-            className="inputBox"
-            placeholder="ROOM ID"
-            onChange={(e) => setRoomId(e.target.value)}
-            value={roomId}
-            onKeyUp={handleInputEnter}
-          />
-          <input
-            type="text"
-            className="inputBox"
-            placeholder="User Name"
-            //This function is triggered when the value of an input element changes.
-            //It updates the roomId state variable with the new value.
-            onChange={(e) => setUsername(e.target.value)}
-            value={username}
-            onKeyUp={handleInputEnter}
-          />
-          <button className="btn joinBtn" onClick={joinRoom} >
-            Join
-          </button>
-          <span className="createInfo">
-            If you don't have invite &nbsp;
-            <a onClick={createNewRoom} href="" className="Create New">
-            &#8618; Create Room 
-            </a>
-          </span>
+    return (
+        <div className="home-root">
+            {/* Left sidebar */}
+            <aside className="home-sidebar">
+                <div className="sidebar-logo">CB</div>
+                <nav className="sidebar-icons">
+                    <span className="sidebar-icon active" title="Workspace">⊞</span>
+                    <span className="sidebar-icon" title="Extensions">⊕</span>
+                    <span className="sidebar-icon" title="Collaboration">⊗</span>
+                    <span className="sidebar-icon" title="Plugins">⊘</span>
+                    <span className="sidebar-icon" title="Gallery">⊙</span>
+                </nav>
+                <div className="sidebar-bottom">
+                    <span className="sidebar-icon" title="Help">?</span>
+                    <span className="sidebar-icon" title="Settings">⚙</span>
+                </div>
+            </aside>
+
+            <main className="home-main">
+                {/* Top nav */}
+                <header className="home-topbar">
+                    <span className="topbar-brand">CodeBlend</span>
+                    <nav className="topbar-nav">
+                        <span className="topbar-link active">Workspace</span>
+                        <span className="topbar-link">Logs</span>
+                        <span className="topbar-link">Settings</span>
+                    </nav>
+                </header>
+
+                <div className="home-center">
+                    <div className="home-card">
+                        <h1 className="card-headline">Logic Awaits.</h1>
+                        <p className="card-sub">Join a session or start a fresh collaborative workspace.</p>
+
+                        {/* Step 1 — Room ID */}
+                        <div className="form-section">
+                            <label className="form-label">ROOM ID</label>
+                            <div className="input-row">
+                                <input
+                                    className="form-input"
+                                    type="text"
+                                    placeholder="Paste invite room ID"
+                                    value={roomId}
+                                    onChange={(e) => setRoomId(e.target.value)}
+                                    onKeyUp={handleInputEnter}
+                                />
+                                {roomId && (
+                                    <button
+                                        className="input-icon-btn"
+                                        onClick={copyRoomId}
+                                        title="Copy Room ID"
+                                    >
+                                        ⎘
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Step 2 — Username */}
+                        <div className="form-section">
+                            <label className="form-label">YOUR NAME</label>
+                            <div className="input-row">
+                                <input
+                                    className="form-input"
+                                    type="text"
+                                    placeholder="Enter your username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    onKeyUp={handleInputEnter}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Join button */}
+                        <button className="init-btn" onClick={joinRoom}>
+                            Join Workspace
+                        </button>
+
+                        {/* Create new room */}
+                        <div className="divider"><span>OR</span></div>
+
+                        <p className="create-info">
+                            Don't have an invite?{' '}
+                            <a href="/" className="create-link" onClick={createNewRoom}>
+                                ↗ Create new room
+                            </a>
+                        </p>
+                    </div>
+                </div>
+
+                {/* Decorative background code */}
+                <div className="bg-code-preview" aria-hidden="true">
+                    <pre>{`import codeblend_sdk as cb
+from core import Architect
+
+# Initialize the workspace environment
+class ProjectController:
+    def __init__(self, name):
+        self.project_name = name
+        self.status = 'initializing'
+
+    async def deploy_cluster(self):
+        print(f"Spinning up {self.project_name}...")
+        return await cb.launch_node(
+            region='us-east-monolith-1',
+            tier='optimized-graphite'
+        )
+
+# Ready for collaboration`}</pre>
+                </div>
+            </main>
         </div>
-      </div>
-      <footer>
-        Crafted with 💜 By &nbsp;
-        <a href="https://github.com/Hitesh103">Hitesh</a>.
-      </footer>
-    </div>
-  );
+    );
 }
 
 export default Home;

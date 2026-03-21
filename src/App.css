@@ -1,119 +1,33 @@
-.homePageWrapper{
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Global resets and base styles */
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
-.formWrapper{
-  /* background: rgb(170, 198, 255); */
-  padding: 20px;
-  border-radius: 10px;
-  width: 400px;
-  max-width: 90%;
+body {
+    margin: 0;
+    padding: 0;
+    background: #0d0f14;
+    color: #c9d1d9;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-footer{
-  position: fixed;
-  bottom: 0;
-  margin-bottom: 5px;
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
 
-footer a{
-  color: black;
+::-webkit-scrollbar-track {
+    background: #13151a;
 }
 
-.inputGroup{
-  display: flex;
-  flex-direction: column;
-}
-.mainLabel{
-  margin-bottom: 20px;
-  margin-top: 0px;
+::-webkit-scrollbar-thumb {
+    background: #2a2d35;
+    border-radius: 3px;
 }
 
-.inputBox{
-  padding: 10px;
-  border-radius: 5px;
-  outline: none;
-}
-
-.btn{
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  font-weight: bold;
-  width: 100%;
-}
-
-.joinBtn, .leaveBtn{
-  background: rgb(167, 87, 243);
-  width: 100%;
-}
-
-.joinBtn:hover, .leaveBtn:hover{
-  background: purple;
-}
-
-.mainWrap {
-  /* display: grid;
-  grid-template-columns: 230px 1fr; */
-  display: flex;
-}
-
-.aside{
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    height: 700px;
-}
-
-.asideInner{
-    flex: 1;
-}
-
-.clientList{
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.client{
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  font-weight: bold;
-}
-
-.userName{
-  margin-top: 10px;
-}
-
-.logo{
-  border-bottom: 1px solid purple;
-  padding-bottom: 10px;
-}
-
-.leaveBtn{
-  margin-top: 20px;
-}
-
-.CodeMirror {
-  min-height: calc(100vh-10px);
-  line-height: 1.6;
-  padding-top: 20px;
-  font-size: 20px;
-  height: 700px;
-}
-
-.joinBtn{
-  margin-top: 20px;
-}
-
-.createInfo{
-  margin-top: 5px;
+::-webkit-scrollbar-thumb:hover {
+    background: #7c6af7;
 }

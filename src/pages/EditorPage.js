@@ -1,203 +1,115 @@
-import React, { useEffect, useState, useRef } from "react";
-import toast from "react-hot-toast";
-import ACTIONS from "../actions";
-import logo from "./logo.png";
-import Client from "../components/Client";
-import Editor from "../components/Editor";
-import { initSocket } from "../socket";
-import {
-  Navigate,
-  useLocation,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import React, { useState, useRef, useCallback } from 'react';
+import toast from 'react-hot-toast';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import Client from '../components/Client';
+import Editor from '../components/Editor';
+import { useSocket } from '../hooks/useSocket';
+import './EditorPage.css';
 
-function removeDuplicateClasses(classNames) {
-  const classesArray = classNames.split(" ");
-  const uniqueClasses = new Set(classesArray);
-  return Array.from(uniqueClasses).join(" ");
-}
-
-/**
- * EditorPage component for the editor page
- */
 function EditorPage() {
-  const socketRef = useRef(null);
-  const codeRef = useRef(null);
-  const location = useLocation();
-  const { roomId } = useParams();
-  const reactNavigator = useNavigate();
+    const location = useLocation();
+    const { roomId } = useParams();
+    const reactNavigator = useNavigate();
 
-  const [clients, setClients] = useState([]);
+    const [clients, setClients] = useState([]);
+    const [typingUsers, setTypingUsers] = useState([]);
+    const codeRef = useRef(null);
 
-  /**
-   * Event handler for when a user disconnects from the room
-   * @param {Object} param - The socketId and username of the disconnected user
-   */
-  const handleDisconnected = ({ socketId, username }) => {
-    toast.success(`${username} left the room.`);
-    setClients((prev) => {
-      return prev.filter((client) => client.socketId !== socketId);
-    });
-  };
+    const username = location.state?.username;
 
-  useEffect(() => {
-    /**
-     * Initialize the socket connection and set up event listeners
-     */
-    const init = async () => {
-      console.debug("Entered init");
-      socketRef.current = await initSocket();
-      socketRef.current.on("connect_error", (err) => handleErrors(err));
-      socketRef.current.on("connect_failed", (err) => handleErrors(err));
-
-      /**
-       * Handle socket connection errors
-       * @param {Error} e - The error object
-       */
-      function handleErrors(e) {
-        console.log("socket error", e);
-        toast.error("Socket connection failed, try again later");
-        reactNavigator("/");
-      }
-
-      socketRef.current.emit(ACTIONS.JOIN, {
-        roomId,
-        username: location.state?.username,
-      });
-
-      //Listening For joined event
-      socketRef.current.on(
-        ACTIONS.JOINED,
-        ({ clients, username, socketId }) => {
-          if (username !== location.state.username) {
-            toast.success(`${username} joined the room.`);
-            console.log(`${username} joined`);
-          }
-
-          let uniqueUsernames = new Set();
-
-          // Use filter to remove duplicates in the existing array
-          clients = clients.filter(client => {
-              // If the username is not in the set, add it and keep the object
-              if (!uniqueUsernames.has(client.username)) {
-                  uniqueUsernames.add(client.username);
-                  return true;
-              }
-              return false;
-          });
-
-          setClients(clients);
-          socketRef.current.emit(ACTIONS.SYNC_CODE, {
-            code: codeRef.current,
-            socketId,
-          });
+    const handleClientsUpdate = useCallback((data, eventUser) => {
+        if (data === null) {
+            toast.error('Socket connection failed, try again later');
+            reactNavigator('/');
+            return;
         }
-      );
+        if (data?.remove) {
+            setClients(prev => prev.filter(c => c.socketId !== data.remove));
+            if (eventUser) toast.success(`${eventUser} left the room.`);
+            return;
+        }
+        setClients(data);
+        if (eventUser) toast.success(`${eventUser} joined the room.`);
+    }, [reactNavigator]);
 
-      //Listening For Disconnected
-      socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }) => {
-        toast.success(`${username} left the room.`);
-        setClients((prev) => {
-          return prev.filter((client) => client.socketId !== socketId);
-        });
-      });
+    const handleTyping = useCallback((typingUser, isTyping) => {
+        setTypingUsers(prev =>
+            isTyping
+                ? prev.includes(typingUser) ? prev : [...prev, typingUser]
+                : prev.filter(u => u !== typingUser)
+        );
+    }, []);
+
+    const { socketRef, setCodeSnapshot } = useSocket({
+        roomId,
+        username,
+        onClientsUpdate: handleClientsUpdate,
+        onTyping: handleTyping,
+    });
+
+    // Store username on socket ref so Editor can access it for emitting
+    if (socketRef.current) socketRef.current._username = username;
+
+    const copyRoomId = async () => {
+        try {
+            await navigator.clipboard.writeText(roomId);
+            toast.success('Room ID copied.');
+        } catch {
+            toast.error('Could not copy room ID.');
+        }
     };
 
-    /**
-     * Remove duplicate elements with the given class name
-     * @param {string} className - The class name of the elements to remove duplicates from
-     */
-    function remElement(className) {
-      var elements = document.getElementsByClassName(className);
-      while (elements.length > 1) {
-        elements[0].parentNode.removeChild(elements[1]);
-      }
-    
-      var editorElement = document.querySelector(".cm-s-dracula");
-      if (editorElement) {
-        editorElement.style.height = "97.90vh";
-      }
-    }
+    const leaveRoom = () => reactNavigator('/');
 
-    init();
-    remElement("cm-s-dracula");
+    if (!location.state) return <Navigate to="/" />;
 
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current.off(ACTIONS.JOINED);
-        socketRef.current.off(ACTIONS.DISCONNECTED);
-        socketRef.current.off(ACTIONS.CODE_CHANGE);
-      }
-    };
-  }, []);
+    return (
+        <div className="editor-page">
+            <aside className="ep-sidebar">
+                <div className="ep-sidebar-top">
+                    <div className="ep-logo">CB</div>
+                    <div className="ep-room-info">
+                        <span className="ep-room-label">ROOM</span>
+                        <span className="ep-room-id" title={roomId}>
+                            {roomId.slice(0, 8)}…
+                        </span>
+                    </div>
+                </div>
 
-  /**
-   * Copy the room ID to the clipboard
-   * @param {string} roomId - The room ID to copy
-   */
-  async function copyRoomId(roomId) {
-    try {
-      await navigator.clipboard.writeText(roomId);
-      toast.success("Room Id is copied.");
-    } catch (err) {
-      toast.error("Not copied room Id.");
-      console.error(err);
-    }
-  }
+                <div className="ep-sidebar-section">
+                    <span className="ep-section-label">
+                        CONNECTED · {clients.length}
+                    </span>
+                    <div className="ep-client-list">
+                        {clients.map(client => (
+                            <Client key={client.socketId} username={client.username} />
+                        ))}
+                    </div>
+                </div>
 
-  /**
-   * Leave the current room and navigate back to the home page
-   */
-  function leaveRoom() {
-    reactNavigator("/");
-  }
+                <div className="ep-sidebar-bottom">
+                    <button className="ep-btn ep-copy-btn" onClick={copyRoomId}>
+                        Copy Room ID
+                    </button>
+                    <button className="ep-btn ep-leave-btn" onClick={leaveRoom}>
+                        Leave Room
+                    </button>
+                </div>
+            </aside>
 
-  if (!location.state) {
-    return <Navigate to="/" />;
-  }
-
-  return (
-    <div className="mainWrap">
-      <div className="aside">
-        <div className="asideInner">
-          <div className="logo">
-            <img className="logoImage" src={logo} alt="logo"></img>
-          </div>
-        <button
-          className="btn copyBtn"
-          onClick={() => copyRoomId(roomId.toString())}
-        >
-          Copy Room ID
-        </button>
-        <button className="btn leaveBtn" onClick={leaveRoom}>
-          Leave
-        </button>
-          <h3>Connected</h3>
-          <div className="clientList">
-            {clients.map((client) => (
-              <Client key={client.socketId} username={client.username} />
-            ))}
-          </div>
+            <div className="ep-editor-wrap">
+                <Editor
+                    socketRef={socketRef}
+                    roomId={roomId}
+                    typingUsers={typingUsers}
+                    onCodeChange={(code) => {
+                        codeRef.current = code;
+                        setCodeSnapshot(code);
+                    }}
+                />
+            </div>
         </div>
-      </div>
-      <div className="editorWrap" style={{ width: "100%" }}>
-        <Editor
-          socketRef={socketRef}
-          roomId={roomId}
-          onCodeChange={(code) => {
-            codeRef.current = code;
-          }}
-          className={removeDuplicateClasses("CodeMirror cm-s-dracula cm-s-default")}
-        />
-      </div>
-    </div>
-  );
+    );
 }
 
 export default EditorPage;
-
-
-
-
