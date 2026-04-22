@@ -1,38 +1,59 @@
 .client {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
 }
 
 .client:hover {
-    background: #1e2128;
+  background: #1e2128;
 }
 
 .client-avatar-wrap {
-    position: relative;
-    flex-shrink: 0;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .client-online-dot {
-    position: absolute;
-    bottom: -1px;
-    right: -1px;
-    width: 9px;
-    height: 9px;
-    background: #3fb950;
-    border-radius: 50%;
-    border: 2px solid #13151a;
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  background: #3fb950;
+  border-radius: 50%;
+  border: 2px solid #13151a;
+}
+
+.client-avatar-wrap.speaking .sb-avatar__image,
+.client-avatar-wrap.speaking .sb-avatar__text {
+  box-shadow: 0 0 0 2px #238636;
+  border-radius: 8px;
+}
+
+.client-voice-indicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: #58a6ff;
+  border-radius: 50%;
+  border: 2px solid #13151a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
 }
 
 .client-username {
-    font-size: 13px;
-    color: #c9d1d9;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 130px;
+  font-size: 13px;
+  color: #c9d1d9;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }

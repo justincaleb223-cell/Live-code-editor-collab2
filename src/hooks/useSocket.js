@@ -1,6 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { initSocket } from '../socket';
-import ACTIONS from '../actions';
+import { useEffect, useRef, useCallback } from "react";
+import { initSocket } from "../socket";
+import ACTIONS from "../actions";
 
 /**
  * Manages socket lifecycle: join, client list, typing, disconnect.
@@ -8,66 +8,76 @@ import ACTIONS from '../actions';
  * to avoid double-firing.
  */
 export function useSocket({ roomId, username, onClientsUpdate, onTyping }) {
-    const socketRef = useRef(null);
+  const socketRef = useRef(null);
 
-    useEffect(() => {
-        let mounted = true;
+  useEffect(() => {
+    let mounted = true;
 
-        const init = async () => {
-            socketRef.current = await initSocket();
+    const init = async () => {
+      socketRef.current = await initSocket();
 
-            socketRef.current.on('connect_error', () => {
-                if (mounted) onClientsUpdate(null);
-            });
+      socketRef.current.on("connect_error", (err) => {
+        console.error("[Socket] connect_error in useSocket:", err.message);
+        // Don't immediately redirect — give reconnection a chance (helpful on mobile/LAN)
+      });
 
-            socketRef.current.emit(ACTIONS.JOIN, { roomId, username });
+      socketRef.current.emit(ACTIONS.JOIN, { roomId, username });
 
-            socketRef.current.on(ACTIONS.JOINED, ({ clients, username: joinedUser, socketId }) => {
-                if (!mounted) return;
+      socketRef.current.on(
+        ACTIONS.JOINED,
+        ({ clients, username: joinedUser, socketId }) => {
+          if (!mounted) return;
 
-                // Deduplicate by username
-                const seen = new Set();
-                const unique = clients.filter(c => {
-                    if (seen.has(c.username)) return false;
-                    seen.add(c.username);
-                    return true;
-                });
+          // Deduplicate by username
+          const seen = new Set();
+          const unique = clients.filter((c) => {
+            if (seen.has(c.username)) return false;
+            seen.add(c.username);
+            return true;
+          });
 
-                onClientsUpdate(unique, joinedUser !== username ? joinedUser : null);
+          onClientsUpdate(unique, joinedUser !== username ? joinedUser : null);
 
-                // Sync current code snapshot to the newly joined socket
-                socketRef.current.emit(ACTIONS.SYNC_CODE, {
-                    socketId,
-                    code: socketRef.current._codeSnapshot || '',
-                });
-            });
+          // Sync current code snapshot to the newly joined socket
+          socketRef.current.emit(ACTIONS.SYNC_CODE, {
+            socketId,
+            code: socketRef.current._codeSnapshot || "",
+          });
+        },
+      );
 
-            socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username: leftUser }) => {
-                if (!mounted) return;
-                onClientsUpdate({ remove: socketId }, leftUser);
-            });
+      socketRef.current.on(
+        ACTIONS.DISCONNECTED,
+        ({ socketId, username: leftUser }) => {
+          if (!mounted) return;
+          onClientsUpdate({ remove: socketId }, leftUser);
+        },
+      );
 
-            socketRef.current.on(ACTIONS.TYPING, ({ username: typingUser, isTyping }) => {
-                if (mounted && onTyping) onTyping(typingUser, isTyping);
-            });
-        };
+      socketRef.current.on(
+        ACTIONS.TYPING,
+        ({ username: typingUser, isTyping }) => {
+          if (mounted && onTyping) onTyping(typingUser, isTyping);
+        },
+      );
+    };
 
-        init();
+    init();
 
-        return () => {
-            mounted = false;
-            if (socketRef.current) {
-                socketRef.current.off(ACTIONS.JOINED);
-                socketRef.current.off(ACTIONS.DISCONNECTED);
-                socketRef.current.off(ACTIONS.TYPING);
-                socketRef.current.disconnect();
-            }
-        };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      mounted = false;
+      if (socketRef.current) {
+        socketRef.current.off(ACTIONS.JOINED);
+        socketRef.current.off(ACTIONS.DISCONNECTED);
+        socketRef.current.off(ACTIONS.TYPING);
+        socketRef.current.disconnect();
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const setCodeSnapshot = useCallback((code) => {
-        if (socketRef.current) socketRef.current._codeSnapshot = code;
-    }, []);
+  const setCodeSnapshot = useCallback((code) => {
+    if (socketRef.current) socketRef.current._codeSnapshot = code;
+  }, []);
 
-    return { socketRef, setCodeSnapshot };
+  return { socketRef, setCodeSnapshot };
 }

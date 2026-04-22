@@ -10,19 +10,26 @@ const server = http.createServer(app);
 // CORS configuration for production
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
-  : ["http://localhost:3000"];
+  : true; // allow all origins in development
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: "*",
     methods: ["GET", "POST"],
-    credentials: true,
+    credentials: false,
   },
+  allowEIO3: true,
 });
 
 const userSocketMap = {};
+const voiceUsers = {}; // socketId -> roomId
 
 app.use(express.static(path.join(__dirname, "build")));
+
+// Health-check endpoint so phones can verify they can reach the backend
+app.get("/ping", (_req, res) => {
+  res.json({ ok: true, time: Date.now() });
+});
 
 function getAllConnectedClients(roomId) {
   return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
@@ -65,6 +72,31 @@ io.on("connection", (socket) => {
     socket.in(roomId).emit(ACTIONS.CURSOR_CHANGE, { username, cursor });
   });
 
+  // Voice chat signaling
+  socket.on(ACTIONS.VOICE_JOIN, ({ roomId, username }) => {
+    voiceUsers[socket.id] = roomId;
+    socket.to(roomId).emit(ACTIONS.VOICE_USER_JOINED, {
+      socketId: socket.id,
+      username,
+    });
+  });
+
+  socket.on(ACTIONS.VOICE_SIGNAL, ({ toSocketId, signal, username }) => {
+    io.to(toSocketId).emit(ACTIONS.VOICE_SIGNAL, {
+      fromSocketId: socket.id,
+      signal,
+      username,
+    });
+  });
+
+  socket.on(ACTIONS.VOICE_LEAVE, ({ roomId, username }) => {
+    delete voiceUsers[socket.id];
+    socket.to(roomId).emit(ACTIONS.VOICE_USER_LEFT, {
+      socketId: socket.id,
+      username,
+    });
+  });
+
   socket.on("disconnecting", () => {
     const rooms = [...socket.rooms];
     rooms.forEach((roomId) => {
@@ -72,8 +104,16 @@ io.on("connection", (socket) => {
         socketId: socket.id,
         username: userSocketMap[socket.id],
       });
+      // Notify voice users if this socket was in voice
+      if (voiceUsers[socket.id]) {
+        socket.in(roomId).emit(ACTIONS.VOICE_USER_LEFT, {
+          socketId: socket.id,
+          username: userSocketMap[socket.id],
+        });
+      }
     });
     delete userSocketMap[socket.id];
+    delete voiceUsers[socket.id];
   });
 });
 
